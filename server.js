@@ -1,44 +1,27 @@
 const express = require('express');
 const cors = require('cors');
-const puppeteer = require('puppeteer');
+const axios = require('axios');
 
 const app = express();
 app.use(cors());
 
-async function scrapePromotions() {
-    const browser = await puppeteer.launch({ 
-        headless: "new",
-        args: ['--no-sandbox', '--disable-setuid-sandbox']
-    });
-    const page = await browser.newPage();
-    
-    try {
-        // Отиваме в Кауфланд
-        await page.goto('https://www.kaufland.bg/oferti.html', { waitUntil: 'domcontentloaded', timeout: 60000 });
-        
-        const promos = await page.evaluate(() => {
-            const items = Array.from(document.querySelectorAll('.product-item')).slice(0, 20);
-            return items.map(item => {
-                const product = item.querySelector('.title')?.innerText || 'Продукт';
-                const priceElem = item.querySelector('.new-price')?.innerText || '0';
-                const newPrice = parseFloat(priceElem.replace(/[^0-9,.]/g, '').replace(',', '.'));
-                return { store: "КАУФЛАНД", product, oldPrice: newPrice * 1.2, newPrice };
-            }).filter(p => p.newPrice > 0);
-        });
-
-        await browser.close();
-        return promos;
-    } catch (e) {
-        console.error("Грешка:", e);
-        await browser.close();
-        return [];
-    }
-}
-
 app.get('/api/promos', async (req, res) => {
-    const data = await scrapePromotions();
-    res.json(data);
+    try {
+        // Пробен списък с оферти, за да сме сигурни, че СЪРВЪРЪТ РАБОТИ
+        const testData = [
+            { store: "КАУФЛАНД", product: "Банани 1кг", oldPrice: 1.80, newPrice: 1.25 },
+            { store: "КАУФЛАНД", product: "Прясно мляко", oldPrice: 1.50, newPrice: 1.10 },
+            { store: "КАУФЛАНД", product: "Кафе 500гр", oldPrice: 8.50, newPrice: 5.99 },
+            { store: "МЕТРО", product: "Сирене 1кг", oldPrice: 12.00, newPrice: 9.50 },
+            { store: "МЕТРО", product: "Олио 1л", oldPrice: 2.20, newPrice: 1.85 }
+        ];
+        
+        console.log("Изпращам оферти...");
+        res.json(testData);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
 });
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+app.listen(PORT, () => console.log(`🚀 Сървърът е готов на порт ${PORT}`));

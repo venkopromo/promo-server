@@ -17,7 +17,7 @@ async function scrapePromotions() {
         await page.goto('https://www.kaufland.bg/oferti.html', { waitUntil: 'networkidle2' });
         
         promos = await page.evaluate(() => {
-            const items = Array.from(document.querySelectorAll('.product-item')).slice(0, 10); 
+            const items = Array.from(document.querySelectorAll('.product-item')).slice(0, 50); 
             return items.map(item => {
                 const product = item.querySelector('.title')?.innerText || 'Продукт';
                 const oldPrice = parseFloat((item.querySelector('.old-price')?.innerText || '0').replace(/[^0-9,.]/g, '').replace(',', '.'));
